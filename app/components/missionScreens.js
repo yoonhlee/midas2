@@ -1,3 +1,7 @@
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
+}
+
 function renderMaterial(material, esc) {
   const title = `<div class="mat-title">${esc(material.title || material.subtype || material.material_id)}</div>`;
   const description = material.description ? `<div class="mat-desc">${esc(material.description)}</div>` : "";
@@ -243,5 +247,42 @@ export function renderMissionScreen({
         <button class="btn btn-p" id="btn-mnext"${answerReady ? "" : " disabled"} style="width:100%">${isLastMission ? "결과 보기 →" : "다음 →"}</button>
       </div>
     </div>
+  </div>`;
+}
+
+export function renderMissionListScreen({ state, jobDef, missions }) {
+  const cards = missions.map((mission) => {
+    const isSelected = state.selectedMissionKey === mission.key;
+    const raw = mission._raw || {};
+    const missionSpec = raw.mission || {};
+    const scenario = missionSpec.scenario || {};
+    const facts = raw.mission_facts || {};
+    const submissionFormat = missionSpec.submission_format || {};
+    const estimatedTime = submissionFormat.estimated_time_minutes || 15;
+    const contextSnippet = (scenario.context || facts.main_issue || "").slice(0, 90);
+
+    return `<div class="ml-card${isSelected ? " sel" : ""}" data-mk="${esc(mission.key)}">
+      <div class="ml-check">✓</div>
+      <div class="ml-info">
+        <div class="ml-title">${esc(mission.title)}</div>
+        <div class="ml-meta">
+          <span class="ml-time">⏱ 약 ${estimatedTime}분</span>
+          ${facts.domain ? `<span class="ml-domain">${esc(facts.domain)}</span>` : ""}
+        </div>
+        ${contextSnippet ? `<div class="ml-preview">${esc(contextSnippet)}…</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  const canStart = !!state.selectedMissionKey;
+
+  return `<div class="sec-head">
+    <div class="eyebrow">${jobDef.icon} ${esc(jobDef.job_name)}</div>
+    <div class="sec-h">어떤 미션을 수행할까요?</div>
+    <div class="sec-sub">미션을 1개 선택해 풀어보세요 · 약 15분 소요</div>
+  </div>
+  <div class="mission-list">${cards}</div>
+  <div class="fr">
+    <button class="btn btn-p btn-lg" id="btn-start-mission"${canStart ? "" : " disabled"}>미션 시작하기 →</button>
   </div>`;
 }

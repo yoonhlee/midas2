@@ -61,11 +61,28 @@ export function bindAppEvents(ctx) {
       render();
       return;
     }
+    state.screen = "mission-list";
+    state.missionJobIndex = 0;
+    state.missionStepIndex = 0;
+    state.selectedMissionKey = null;
+    state.missionAnswer = "";
+    state.selectedOption = null;
+    render();
+  });
+
+  document.querySelectorAll(".ml-card").forEach((element) => {
+    element.addEventListener("click", () => {
+      state.selectedMissionKey = element.dataset.mk || null;
+      render();
+    });
+  });
+
+  byId("btn-start-mission")?.addEventListener("click", () => {
+    if (!state.selectedMissionKey) return;
     state.screen = "mission";
     state.missionJobIndex = 0;
     state.missionStepIndex = 0;
     state.missionAnswer = "";
-    state.selectedOption = null;
     render();
   });
 
@@ -153,22 +170,25 @@ export function refreshMissionNextButton(ctx) {
 
 export function advanceMissionFlow(ctx) {
   const { appNode, state, getMissionsByJobCode, fetchResultSummary, render } = ctx;
-  const jobCode = state.selectedJobs[state.missionJobIndex];
-  const missions = getMissionsByJobCode(jobCode);
 
-  if (state.missionStepIndex < missions.length - 1) {
-    state.missionStepIndex += 1;
-    state.missionAnswer = "";
-    render();
-    return;
-  }
+  if (!state.selectedMissionKey) {
+    const jobCode = state.selectedJobs[state.missionJobIndex];
+    const missions = getMissionsByJobCode(jobCode);
 
-  if (state.missionJobIndex < state.selectedJobs.length - 1) {
-    state.missionJobIndex += 1;
-    state.missionStepIndex = 0;
-    state.missionAnswer = "";
-    render();
-    return;
+    if (state.missionStepIndex < missions.length - 1) {
+      state.missionStepIndex += 1;
+      state.missionAnswer = "";
+      render();
+      return;
+    }
+
+    if (state.missionJobIndex < state.selectedJobs.length - 1) {
+      state.missionJobIndex += 1;
+      state.missionStepIndex = 0;
+      state.missionAnswer = "";
+      render();
+      return;
+    }
   }
 
   const showResult = async () => {

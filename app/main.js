@@ -33,6 +33,7 @@ import {
   renderRecommendationsSection
 } from "./components/resultDashboard.js";
 import {
+  renderMissionListScreen,
   renderMissionScreen,
   renderPreQuestionScreen,
   renderSelectScreen
@@ -105,13 +106,13 @@ const {
 
 function getMissions(jc) { return getMissionsByJobCode(ALL_MISSIONS, jc); }
 function curMission() { return getCurrentMission({ allMissions: ALL_MISSIONS, state }); }
-function totalM() { return getTotalMissionCount({ allMissions: ALL_MISSIONS, selectedJobs: state.selectedJobs }); }
+function totalM() { return getTotalMissionCount({ allMissions: ALL_MISSIONS, selectedJobs: state.selectedJobs, selectedMissionKey: state.selectedMissionKey }); }
 function doneM() { return getDoneMissionCount({ allMissions: ALL_MISSIONS, state }); }
 function isLast() { return isLastMission({ allMissions: ALL_MISSIONS, state }); }
 
 const APP = document.getElementById("app");
 function render() {
-  const fn = { select: rSelect, preq: rPreq, mission: rMission, result: rResult }[state.screen];
+  const fn = { select: rSelect, preq: rPreq, "mission-list": rMissionList, mission: rMission, result: rResult }[state.screen];
   if (fn) {
     APP.innerHTML = fn();
     bindEvents();
@@ -135,18 +136,28 @@ function rPreq() {
   });
 }
 
+function rMissionList() {
+  const jobCode = state.selectedJobs[0];
+  if (!jobCode) return "<p>직무가 선택되지 않았습니다.</p>";
+  const jobDef = JOB_DEFS.find((j) => j.job_code === jobCode);
+  if (!jobDef) return "<p>직무 정보를 찾을 수 없습니다.</p>";
+  const missions = getMissions(jobCode);
+  return renderMissionListScreen({ state, jobDef, missions });
+}
+
 function rMission() {
   const mission = curMission();
   if (!mission) return "<p>미션을 찾을 수 없습니다.</p>";
-  const jobCode = state.selectedJobs[state.missionJobIndex];
+  const jobCode = mission.job_code || state.selectedJobs[state.missionJobIndex];
   const jobDef = JOB_DEFS.find((j) => j.job_code === jobCode);
   if (!jobDef) return "<p>직무 정보를 찾을 수 없습니다.</p>";
+  const missionCount = state.selectedMissionKey ? 1 : getMissions(jobCode).length;
   return renderMissionScreen({
     state,
     mission,
     jobDef,
     missionProgressPct: Math.round(doneM() / totalM() * 100),
-    missionCount: getMissions(jobCode).length,
+    missionCount,
     renderBrand: brand,
     isLastMission: isLast(),
     esc

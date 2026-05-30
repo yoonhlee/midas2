@@ -26,6 +26,7 @@ export function createInitialState() {
     preqAnswers: {},
     missionJobIndex: 0,
     missionStepIndex: 0,
+    selectedMissionKey: null,
     missionAnswer: "",
     selectedOption: null,
     missionScores: {},
